@@ -1,0 +1,103 @@
+//@version=6
+indicator(title="[TradingX] SMA|EMA", overlay=true)
+
+// INPUTS: begin
+firstMa = input.int(11,minval=1,title = "Shortest:", inline = "00")
+firstType = input.string(defval = "EMA",title = "Type:", options = ["SMA", "EMA"], inline = "00")
+
+secondMa = input.int(22,minval=1,title = "Short:", inline = "01")
+secondType = input.string(defval = "EMA",title = "Type:", options = ["SMA", "EMA"], inline = "01")
+
+thirdMa = input.int(50,minval=1,title = "Middle:", inline = "02")
+thirdType = input.string(defval = "EMA",title = "Type:", options = ["SMA", "EMA"], inline = "02")
+
+forthMa = input.int(100,minval=1,title = "Long:", inline = "03")
+forthType = input.string(defval = "SMA",title = "Type:", options = ["SMA", "EMA"], inline = "03")
+
+fifthsMa = input.int(200,minval=1,title = "Longest:", inline = "04")
+fifthsType = input.string(defval = "SMA",title = "Type:", options = ["SMA", "EMA"], inline = "04")
+
+projectionBars = input.int(20, "MA Projection", minval=1)
+
+showLabels = input.bool(true, title="Show Labels")
+showIntersections = input.bool(true, title="Highlight Intersections (shortest vs short)")
+showProjection = input.bool(false, title="Show Linear Projections")
+// INPUTS: end
+
+shortest =  if firstType == "SMA" 
+    ta.sma(close, firstMa) 
+else 
+    ta.ema(close, firstMa)
+
+short = if secondType == "SMA" 
+    ta.sma(close, secondMa)
+else
+    ta.ema(close, secondMa)
+
+middle = if thirdType == "SMA" 
+    ta.sma(close, thirdMa)
+else
+    ta.ema(close, thirdMa)
+
+longer = if forthType == "SMA" 
+    ta.sma(close, forthMa)
+else
+    ta.ema(close, forthMa)
+
+longest = if fifthsType == "SMA" 
+    ta.sma(close, fifthsMa)
+else    
+    ta.ema(close, fifthsMa)
+
+plot(shortest, color = color.red, title = "Shortest:")
+plot(short, color = color.blue, title = "Short:", linewidth = 2)
+plot(middle, color = color.orange, title = "Middle:")
+plot(longer, color = color.green, title = "Long:", linewidth = 3)
+plot(longest, color = color.purple, title = "Longest:", linewidth = 4)
+
+// display legent on screen
+xPos = (showLabels ? bar_index + 20 : na)
+lbl1 = label.new(xPos, shortest, str.tostring(firstMa) + str.tostring(firstType), style=label.style_label_left, color=color.red, textcolor=color.white)
+lbl2 = label.new(xPos, short, str.tostring(secondMa) + str.tostring(secondType), style=label.style_label_left, color=color.blue, textcolor=color.white)
+lbl3 = label.new(xPos, middle, str.tostring(thirdMa) + str.tostring(thirdType), style=label.style_label_left, color=color.orange, textcolor=color.white)
+lbl4 = label.new(xPos, longer, str.tostring(forthMa) + str.tostring(forthType), style=label.style_label_left, color=color.green, textcolor=color.white)
+lbl5 = label.new(xPos, longest, str.tostring(fifthsMa) + str.tostring(fifthsType), style=label.style_label_left, color=color.purple, textcolor=color.white)
+
+label.delete(lbl1[1])
+label.delete(lbl2[1])
+label.delete(lbl3[1])
+label.delete(lbl4[1])
+label.delete(lbl5[1])
+
+// make a CROSS mark
+plot((showIntersections ? (ta.cross(shortest, short) ? short: na): na), color=#6c25dd47, style = plot.style_circles, linewidth = 16, title="Cross", offset = -1)
+
+// Initialize line variables for projections
+var line shortestLine = na
+var line shortLine    = na
+var line middleLine   = na
+var line longerLine   = na
+var line longestLine  = na
+
+// Calculate future positions based on slope
+if barstate.islast and showProjection
+    // Update/replace lines on latest bar
+    line.delete(shortestLine)
+    line.delete(shortLine)
+    line.delete(middleLine)
+    line.delete(longerLine)
+    line.delete(longestLine)
+
+    // Calculate slopes for projections
+    slopeShortest = (shortest - shortest[1]) * projectionBars
+    slopeShort = (short - short[1]) * projectionBars
+    slopeMiddle = (middle - middle[1]) * projectionBars
+    slopeLonger = (longer - longer[1]) * projectionBars
+    slopeLongest = (longest - longest[1]) * projectionBars
+
+    // Create projected lines based on slopes
+    shortestLine := line.new(bar_index, shortest, bar_index + projectionBars, shortest + slopeShortest, xloc=xloc.bar_index, color=color.new(color.red, 50), width=1, style = line.style_dashed)
+    shortLine    := line.new(bar_index, short, bar_index + projectionBars, short + slopeShort, xloc=xloc.bar_index, color=color.new(color.blue, 50), width=2, style = line.style_dashed)
+    middleLine   := line.new(bar_index, middle, bar_index + projectionBars, middle + slopeMiddle, xloc=xloc.bar_index, color=color.new(color.orange, 50), width=1, style = line.style_dashed)
+    longerLine   := line.new(bar_index, longer, bar_index + projectionBars, longer + slopeLonger, xloc=xloc.bar_index, color=color.new(color.green, 50), width=3, style = line.style_dotted)
+    longestLine  := line.new(bar_index, longest, bar_index + projectionBars, longest + slopeLongest, xloc=xloc.bar_index, color=color.new(color.purple, 50), width=4, style = line.style_dotted)
