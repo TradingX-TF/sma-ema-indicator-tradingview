@@ -2,7 +2,7 @@
 
 Custom SMA/EMA 5-lines on graph, with labels that allow to identify each line easily.
 
-Developed by @OleksandrKucherenko \
+Developed by [@OleksandrKucherenko](https://github.com/OleksandrKucherenko) \
 [Link to the indicator on TradingView](https://www.tradingview.com/script/TVQqZEr0-TradingX-SMA-EMA/)
 
 [Follow Alex on GitHub](https://github.com/OleksandrKucherenko) \
