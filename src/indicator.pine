@@ -17,6 +17,9 @@ forthType = input.string(defval = "SMA",title = "Type:", options = ["SMA", "EMA"
 fifthsMa = input.int(200,minval=1,title = "Longest:", inline = "04")
 fifthsType = input.string(defval = "SMA",title = "Type:", options = ["SMA", "EMA"], inline = "04")
 
+sixthMa = input.int(360,minval=1,title = "Verylong:", inline = "05")
+sixthsType = input.string(defval = "SMA",title = "Type:", options = ["SMA", "EMA"], inline = "05")
+
 projectionBars = input.int(20, "MA Projection", minval=1)
 
 showLabels = input.bool(true, title="Show Labels")
@@ -25,8 +28,8 @@ showProjection = input.bool(false, title="Show Linear Projections")
 // INPUTS: end
 
 shortest =  if firstType == "SMA" 
-    ta.sma(close, firstMa) 
-else 
+    ta.sma(close, firstMa)
+else
     ta.ema(close, firstMa)
 
 short = if secondType == "SMA" 
@@ -46,14 +49,20 @@ else
 
 longest = if fifthsType == "SMA" 
     ta.sma(close, fifthsMa)
-else    
+else
     ta.ema(close, fifthsMa)
+
+verylong = if sixthsType == "SMA"
+    ta.sma(close, sixthMa)
+else
+    ta.ema(close,sixthMa)
 
 plot(shortest, color = color.red, title = "Shortest:")
 plot(short, color = color.blue, title = "Short:", linewidth = 2)
 plot(middle, color = color.orange, title = "Middle:")
 plot(longer, color = color.green, title = "Long:", linewidth = 3)
 plot(longest, color = color.purple, title = "Longest:", linewidth = 4)
+plot(verylong, color = color.olive, title = "Very long:")
 
 // display legent on screen
 xPos = (showLabels ? bar_index + 20 : na)
@@ -62,12 +71,14 @@ lbl2 = label.new(xPos, short, str.tostring(secondMa) + str.tostring(secondType),
 lbl3 = label.new(xPos, middle, str.tostring(thirdMa) + str.tostring(thirdType), style=label.style_label_left, color=color.orange, textcolor=color.white)
 lbl4 = label.new(xPos, longer, str.tostring(forthMa) + str.tostring(forthType), style=label.style_label_left, color=color.green, textcolor=color.white)
 lbl5 = label.new(xPos, longest, str.tostring(fifthsMa) + str.tostring(fifthsType), style=label.style_label_left, color=color.purple, textcolor=color.white)
+lbl6 = label.new(xPos, verylong, str.tostring(sixthMa) + str.tostring(sixthsType), style=label.style_label_left, color=color.olive, textcolor=color.white)
 
 label.delete(lbl1[1])
 label.delete(lbl2[1])
 label.delete(lbl3[1])
 label.delete(lbl4[1])
 label.delete(lbl5[1])
+label.delete(lbl6[1])
 
 // make a CROSS mark
 plot((showIntersections ? (ta.cross(shortest, short) ? short: na): na), color=#6c25dd47, style = plot.style_circles, linewidth = 16, title="Cross", offset = -1)
@@ -78,6 +89,7 @@ var line shortLine    = na
 var line middleLine   = na
 var line longerLine   = na
 var line longestLine  = na
+var line verylongLine  = na
 
 // Calculate future positions based on slope
 if barstate.islast and showProjection
@@ -87,6 +99,7 @@ if barstate.islast and showProjection
     line.delete(middleLine)
     line.delete(longerLine)
     line.delete(longestLine)
+    line.delete(verylongLine)
 
     // Calculate slopes for projections
     slopeShortest = (shortest - shortest[1]) * projectionBars
@@ -94,6 +107,7 @@ if barstate.islast and showProjection
     slopeMiddle = (middle - middle[1]) * projectionBars
     slopeLonger = (longer - longer[1]) * projectionBars
     slopeLongest = (longest - longest[1]) * projectionBars
+    slopeVerylong = (verylong - verylong[1]) * projectionBars
 
     // Create projected lines based on slopes
     shortestLine := line.new(bar_index, shortest, bar_index + projectionBars, shortest + slopeShortest, xloc=xloc.bar_index, color=color.new(color.red, 50), width=1, style = line.style_dashed)
@@ -101,3 +115,4 @@ if barstate.islast and showProjection
     middleLine   := line.new(bar_index, middle, bar_index + projectionBars, middle + slopeMiddle, xloc=xloc.bar_index, color=color.new(color.orange, 50), width=1, style = line.style_dashed)
     longerLine   := line.new(bar_index, longer, bar_index + projectionBars, longer + slopeLonger, xloc=xloc.bar_index, color=color.new(color.green, 50), width=3, style = line.style_dotted)
     longestLine  := line.new(bar_index, longest, bar_index + projectionBars, longest + slopeLongest, xloc=xloc.bar_index, color=color.new(color.purple, 50), width=4, style = line.style_dotted)
+    verylongLine := line.new(bar_index, verylong, bar_index + projectionBars, verylong + slopeVerylong, xloc=xloc.bar_index, color=color.new(color.olive, 50), width=4, style = line.style_dotted)
